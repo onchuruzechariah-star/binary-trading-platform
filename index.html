@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Trading Platform</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #07111f;
+    color: #fff;
+}
+
+header {
+    background: #0b1728;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1e3048;
+}
+
+.logo {
+    font-size: 21px;
+    font-weight: bold;
+}
+
+.demo {
+    background: #183b2b;
+    color: #4cff91;
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.container {
+    padding: 15px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.balance {
+    background: #0d1c30;
+    border: 1px solid #1d334d;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 15px;
+}
+
+.balance small {
+    color: #91a4bb;
+}
+
+.balance h1 {
+    margin-top: 7px;
+}
+
+.market {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin-bottom: 15px;
+}
+
+.market button {
+    background: #12243a;
+    color: white;
+    border: 1px solid #29415e;
+    padding: 10px 15px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+.market button.active {
+    background: #245c92;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 15px;
+}
+
+.card {
+    background: #0d1c30;
+    border: 1px solid #1d334d;
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.chart {
+    height: 400px;
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(#14273d 1px, transparent 1px),
+        linear-gradient(90deg, #14273d 1px, transparent 1px);
+    background-size: 50px 50px;
+    border-radius: 8px;
+}
+
+.chart-title {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.price {
+    text-align: center;
+    font-size: 25px;
+    margin-top: 10px;
+}
+
+label {
+    display: block;
+    color: #91a4bb;
+    margin: 15px 0 7px;
+}
+
+input, select {
+    width: 100%;
+    padding: 13px;
+    background: #07111f;
+    border: 1px solid #29415e;
+    color: white;
+    border-radius: 8px;
+}
+
+.payout {
+    margin-top: 15px;
+    padding: 12px;
+    background: #102943;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.trade-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.trade-buttons button {
+    border: none;
+    color: white;
+    padding: 15px 8px;
+    border-radius: 9px;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.higher {
+    background: #087f4e;
+}
+
+.lower {
+    background: #b72d43;
+}
+
+.info {
+    margin-top: 15px;
+    color: #91a4bb;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.history {
+    margin-top: 15px;
+}
+
+.trade-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #1d334d;
+    font-size: 13px;
+}
+
+.win {
+    color: #4cff91;
+}
+
+.loss {
+    color: #ff6075;
+}
+
+@media(max-width: 800px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .chart {
+        height: 320px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">⚡ BINARY TRADE</div>
+    <div class="demo">DEMO ACCOUNT</div>
+</header>
+
+<div class="container">
+
+    <div class="balance">
+        <small>Demo Balance</small>
+        <h1 id="balance">$100.00</h1>
+    </div>
+
+    <div class="market">
+        <button class="active" onclick="changeMarket('BTC/USD')">BTC/USD</button>
+        <button onclick="changeMarket('EUR/USD')">EUR/USD</button>
+        <button onclick="changeMarket('GBP/USD')">GBP/USD</button>
+        <button onclick="changeMarket('XAU/USD')">Gold</button>
+        <button onclick="changeMarket('NASDAQ')">NASDAQ</button>
+    </div>
+
+    <div class="layout">
+
+        <div class="card">
+
+            <div class="chart">
+                <div class="chart-title">
+                    <b id="marketName">BTC/USD</b>
+                    <div class="price" id="price">$67,420.50</div>
+                </div>
+
+                <canvas id="chartCanvas"></canvas>
+            </div>
+
+            <div class="history">
+                <h3>Recent Trades</h3>
+
+                <div id="history">
+                    <div class="trade-row">
+                        <span>No trades yet</span>
+                        <span>—</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <h2>Place Trade</h2>
+
+            <label>Trade Amount</label>
+            <input id="amount" type="number" value="1" min="0.10">
+
+            <label>Duration</label>
+            <select id="duration">
+                <option value="30">30 Seconds</option>
+                <option value="60">1 Minute</option>
+                <option value="300">5 Minutes</option>
+            </select>
+
+            <div class="payout">
+                Payout: <b>85%</b><br>
+                Potential profit: <span id="profit">$0.85</span>
+            </div>
+
+            <div class="trade-buttons">
+                <button class="higher" onclick="trade('HIGHER')">
+                    ▲ HIGHER
+                </button>
+
+                <button class="lower" onclick="trade('LOWER')">
+                    ▼ LOWER
+                </button>
+            </div>
+
+            <div class="info">
+                Demo trading only. Results are simulated and do not represent
+                real-market execution.
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let balance = 100;
+let currentMarket = "BTC/USD";
+let currentPrice = 67420.50;
+
+const balanceElement = document.getElementById("balance");
+const amountElement = document.getElementById("amount");
+const profitElement = document.getElementById("profit");
+const historyElement = document.getElementById("history");
+const priceElement = document.getElementById("price");
+
+amountElement.addEventListener("input", function() {
+    let amount = Number(amountElement.value) || 0;
+    profitElement.textContent = "$" + (amount * 0.85).toFixed(2);
+});
+
+function updateBalance() {
+    balanceElement.textContent = "$" + balance.toFixed(2);
+}
+
+function changeMarket(market) {
+
+    currentMarket = market;
+
+    document.getElementById("marketName").textContent = market;
+
+    document.querySelectorAll(".market button").forEach(button => {
+        button.classList.remove("active");
+    });
+
+    event.target.classList.add("active");
+
+    if (market === "BTC/USD") currentPrice = 67420.50;
+    if (market === "EUR/USD") currentPrice = 1.1745;
+    if (market === "GBP/USD") currentPrice = 1.3540;
+    if (market === "XAU/USD") currentPrice = 3650.20;
+    if (market === "NASDAQ") currentPrice = 22000;
+
+    showPrice();
+}
+
+function showPrice() {
+
+    if (currentMarket === "BTC/USD") {
+        priceElement.textContent =
+            "$" + currentPrice.toFixed(2);
+    } else {
+        priceElement.textContent =
+            currentPrice.toFixed(4);
+    }
+}
+
+function trade(direction) {
+
+    let amount = Number(amountElement.value);
+
+    if (amount <= 0) {
+        alert("Enter a valid trade amount.");
+        return;
+    }
+
+    if (amount > balance) {
+        alert("Insufficient demo balance.");
+        return;
+    }
+
+    balance -= amount;
+    updateBalance();
+
+    let startPrice = currentPrice;
+
+    alert(
+        "Demo trade opened!\n\n" +
+        "Market: " + currentMarket +
+        "\nDirection: " + direction +
+        "\nAmount: $" + amount.toFixed(2)
+    );
+
+    setTimeout(function() {
+
+        let movement = (Math.random() - 0.5) * 2;
+        let endPrice = startPrice + movement;
+
+        let win;
+
+        if (direction === "HIGHER") {
+            win = endPrice > startPrice;
+        } else {
+            win = endPrice < startPrice;
+        }
+
+        let result;
+        let resultClass;
+
+        if (win) {
+
+            let profit = amount * 0.85;
+
+            balance += amount + profit;
+
+            result = "+$" + profit.toFixed(2);
+            resultClass = "win";
+
+        } else {
+
+            result = "-$" + amount.toFixed(2);
+            resultClass = "loss";
+        }
+
+        updateBalance();
+
+        historyElement.innerHTML =
+            `<div class="trade-row">
+                <span>${currentMarket} · ${direction}</span>
+                <span class="${resultClass}">${result}</span>
+            </div>` +
+            historyElement.innerHTML;
+
+        alert(
+            win
+            ? "WIN! Demo profit: $" + (amount * 0.85).toFixed(2)
+            : "LOSS! Demo trade lost: $" + amount.toFixed(2)
+        );
+
+    }, 3000);
+}
+
+function drawChart() {
+
+    const canvas = document.getElementById("chartCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    let x = 0;
+    let y = canvas.height / 2;
+
+    ctx.beginPath();
+
+    for (x = 0; x < canvas.width; x += 5) {
+
+        y += (Math.random() - 0.5) * 15;
+
+        if (y < 40) y = 40;
+        if (y > canvas.height - 40)
+            y = canvas.height - 40;
+
+        if (x === 0)
+            ctx.moveTo(x, y);
+        else
+            ctx.lineTo(x, y);
+    }
+
+    ctx.strokeStyle = "#29d391";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
+drawChart();
+
+setInterval(function() {
+
+    currentPrice += (Math.random() - 0.5) * 20;
+
+    showPrice();
+
+}, 1000);
+
+window.addEventListener("resize", drawChart);
+
+</script>
+
+</body>
+          </html>
